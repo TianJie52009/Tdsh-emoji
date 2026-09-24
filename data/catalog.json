@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "name": "tdsh-emoji-core@1",
+  "source": {
+    "name": "Standard Unicode emoji",
+    "note": "精选各平台（iOS / Windows / Android）普遍内置的标准 Unicode 表情，避免肤色修饰、组合序列和新版本表情，保证在旧设备上也能正常显示。"
+  },
+  "categories": [
+    {
+      "id": "happy",
+      "labels": { "zh": "开心/高兴", "en": "happy" },
+      "examples": ["😀", "😄", "😊", "🌟", "✨"]
+    },
+    {
+      "id": "love",
+      "labels": { "zh": "喜欢/心动", "en": "love" },
+      "examples": ["😍", "😘", "❤️", "💕", "💖"]
+    },
+    {
+      "id": "sad",
+      "labels": { "zh": "难过/低落", "en": "sad" },
+      "examples": ["😢", "😔", "😞", "💧"]
+    },
+    {
+      "id": "cry",
+      "labels": { "zh": "大哭/泪目", "en": "cry" },
+      "examples": ["😭", "😿", "💦"]
+    },
+    {
+      "id": "angry",
+      "labels": { "zh": "生气/不满", "en": "angry" },
+      "examples": ["😠", "😡", "💢", "👿"]
+    },
+    {
+      "id": "surprised",
+      "labels": { "zh": "惊讶/震惊", "en": "surprised" },
+      "examples": ["😮", "😲", "😱", "❗"]
+    },
+    {
+      "id": "confused",
+      "labels": { "zh": "困惑/困扰", "en": "confused" },
+      "examples": ["😕", "🤔", "😅", "🤷"]
+    },
+    {
+      "id": "shy",
+      "labels": { "zh": "害羞/不好意思", "en": "shy" },
+      "examples": ["😳", "🙈", "☺️", "😊"]
+    },
+    {
+      "id": "playful",
+      "labels": { "zh": "俏皮/卖萌", "en": "playful" },
+      "examples": ["😜", "😝", "😉", "🤪"]
+    },
+    {
+      "id": "encourage",
+      "labels": { "zh": "鼓励/加油", "en": "encourage" },
+      "examples": ["💪", "👍", "🙌", "✊", "🔥"]
+    },
+    {
+      "id": "thanks",
+      "labels": { "zh": "感谢", "en": "thanks" },
+      "examples": ["🙏", "💖", "🎀", "😊"]
+    },
+    {
+      "id": "sorry",
+      "labels": { "zh": "道歉", "en": "sorry" },
+      "examples": ["🙇", "😔", "🙏", "💧"]
+    }
+  ]
+}

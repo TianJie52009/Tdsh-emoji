@@ -1,0 +1,15 @@
+# tdsh-emoji bundle layer：把 Emoji 插件挂载进 profile。
+#
+# 与 dsh-kaomoji 可共存：两个插件各注入自己的装饰规则，位置都贴合影情绪
+# 句子，但规则要求「emoji 与颜文字不得出现在同一句/同一行」，模型会把它们
+# 分散到不同句子。设置卡片同在「设置 → 通用设置」，id 相邻排列。
+#
+# 想改默认行为，在自己的 profile cordis.patch.yml 里用同一个 id 覆盖 config：
+#   - id: tdsh-emoji
+#     config:
+#       mode: frequent    # off | auto | frequent
+#       placement: inline # inline | end
+#       maxPerTurn: 5     # 1-10
+- insert:
+    - id: tdsh-emoji
+      name: tdsh-emoji
