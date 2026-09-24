@@ -9,13 +9,14 @@
 > generated entirely by OpenAI Codex and have not been human-reviewed.
 
 `Tdsh-emoji` injects a “mood → emoji” whitelist into the system prompt, so the
-model puts a standard emoji **right after the sentence or short phrase whose
-mood it matches**. The library only uses emoji that ship with iOS, Windows and
-Android; no skin-tone modifiers, no exotic sequences.
+model places a standard emoji **right where the content it matches appears** —
+possibly inside a sentence — instead of always appending it after the sentence.
+The library only uses emoji that ship with iOS, Windows and Android; no
+skin-tone modifiers, no exotic sequences.
 
 ## Features
 
-- **Inline placement** — after the matching sentence (default), or at the end of the reply (`end`).
+- **Content-matching placement** — at the point that best matches the content (inside a sentence is fine, default), or at the end of the reply (`end`).
 - **Up to 10 per reply** — `maxPerTurn` 1–10, default 3; `frequent` spreads them across sentences.
 - **Coexists with dsh-kaomoji** — both place decorations after sentences, so this plugin also forbids emoji and kaomoji in the **same sentence or line**; the model picks different sentences. Both settings cards live next to each other under Settings → General.
 - **Visual settings card** — mode, placement, limit and extra guidance; saved live, no restart.
@@ -58,7 +59,7 @@ Defaults: `mode: auto`, `placement: inline`, `maxPerTurn: 3`. Deployment default
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `mode` | `'off' \| 'auto' \| 'frequent'` | `'auto'` | `off` disables; `auto` decorates conversational replies; `frequent` decorates every conversational reply (code-only/formal excluded) |
-| `placement` | `'inline' \| 'end'` | `'inline'` | After the matching sentence, or at the reply end |
+| `placement` | `'inline' \| 'end'` | `'inline'` | At the point that best matches the content (inside a sentence is fine), or at the reply end |
 | `maxPerTurn` | `number` (1–10) | `3` | Emoji cap per reply; `frequent` spreads them across sentences |
 | `customPrompt` | `string` | `''` | Extra style/scene guidance |
 | `settingsFile` | `string` | `~/.dsh/tdsh-emoji.json` | (advanced) user-settings path |
@@ -68,7 +69,7 @@ Defaults: `mode: auto`, `placement: inline`, `maxPerTurn: 3`. Deployment default
 | Plugin | Inserts | Position | Conflict handling |
 | --- | --- | --- | --- |
 | dsh-kaomoji | Japanese kaomoji `(´∀｀)` | after the matching sentence | emoji side forbids sharing a sentence/line |
-| Tdsh-emoji | Standard emoji 😊 | after the matching sentence | `Never place an emoji in the same sentence or line as a kaomoji` |
+| Tdsh-emoji | Standard emoji 😊 | at the point matching the content | `Never place an emoji in the same sentence or line as a kaomoji` |
 
 Both cards live under Settings → General (order 30 / 31).
 

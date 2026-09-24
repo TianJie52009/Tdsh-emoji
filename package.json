@@ -1,6 +1,6 @@
 {
   "name": "tdsh-emoji",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Add widely-supported Unicode emoji to DeepSeek Harness (dsh) replies; prompt-injection plugin designed to coexist with dsh-kaomoji.",
   "type": "module",
   "main": "lib/index.js",

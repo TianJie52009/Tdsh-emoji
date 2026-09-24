@@ -72,7 +72,8 @@ test("buildGuidance covers mode, inline placement, whitelist and coexistence", (
   const auto = buildGuidance({ mode: "auto" });
   assert.match(auto, /Emoji guidance/);
   assert.match(auto, /everyday recommendations or shopping advice/);
-  assert.match(auto, /right after a different sentence or short phrase/);
+  assert.match(auto, /best matches the content/);
+  assert.match(auto, /possibly inside a sentence/);
   assert.match(auto, /Never exceed 3 emoji/);
   assert.match(auto, /render on iOS, Windows and Android/);
   assert.match(auto, /dsh-kaomoji may also add Japanese kaomoji/);

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-25
+
+### Changed
+
+- 放置规则从「贴合情绪的句子之后」改为「**贴合内容**」：emoji 放在最匹配的
+  词、短语或句子旁边，可以在句子中间，不再默认追加到句尾。
+
 ## [0.1.0] - 2026-09-25
 
 ### Added

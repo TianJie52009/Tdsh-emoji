@@ -7,11 +7,11 @@
 
 > 🤖 **纯 Codex 生成**：本仓库的代码与文档均由 OpenAI Codex 自动生成，未经人工逐行审查。使用前请自行阅读并测试。
 
-`Tdsh-emoji` 在模型生成前向系统提示词注入一段「情绪 → emoji」白名单规则，让模型在**贴合情绪的句子或短句之后**放一个标准 Unicode 表情。词库只收 iOS / Windows / Android 普遍内置的表情，不用肤色修饰、组合序列和新版本 emoji，老设备也能正常显示。
+`Tdsh-emoji` 在模型生成前向系统提示词注入一段「情绪 → emoji」白名单规则，让模型把标准 Unicode 表情放在**最匹配的内容旁边**（可以落在句子中间），而不是固定追加到句尾。词库只收 iOS / Windows / Android 普遍内置的表情，不用肤色修饰、组合序列和新版本 emoji，老设备也能正常显示。
 
 ## 特性
 
-- **贴合句子**：emoji 放在最贴合情绪的句子/短句之后（`inline`，默认），或统一放回复结尾（`end`）。
+- **贴合内容**：emoji 放在最匹配的词、短语或句子旁边（可在句中，`inline` 默认），或统一放回复结尾（`end`）。
 - **单条上限 10 个**：`maxPerTurn` 范围 1–10，默认 3；`frequent` 模式下会按数量分散到不同句子。
 - **与 dsh-kaomoji 共存**：两个插件都是“贴合句子”的插法，所以本插件额外规定 **emoji 与颜文字不得出现在同一句/同一行**，模型会把它们分到不同句子；两张设置卡片同在「设置 → 通用设置」且相邻排列。
 - **可视化配置卡片**：模式（关闭 / 智能 / 高频）、放置位置、每条上限、附加提示词，保存即生效，无需重启。
@@ -54,7 +54,7 @@ dsh plugin --profile web add github:TianJie52009/Tdsh-emoji
 | 配置项 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `mode` | `'off' \| 'auto' \| 'frequent'` | `'auto'` | `off` 关闭；`auto` 对话式回复基本都会带；`frequent` 每条对话回复都带（纯代码/正式交付除外） |
-| `placement` | `'inline' \| 'end'` | `'inline'` | 贴合情绪的句子之后，或回复结尾 |
+| `placement` | `'inline' \| 'end'` | `'inline'` | 贴合内容（放在最匹配的位置，可在句中），或回复结尾 |
 | `maxPerTurn` | `number`（1–10） | `3` | 单条回复 emoji 上限；`frequent` 会按数量分散到不同句子 |
 | `customPrompt` | `string` | `''` | 附加风格/场景说明，不能改变模式、白名单或上限 |
 | `settingsFile` | `string` | `~/.dsh/tdsh-emoji.json` | （进阶）用户设置持久化路径 |
@@ -64,7 +64,7 @@ dsh plugin --profile web add github:TianJie52009/Tdsh-emoji
 | 插件 | 插入内容 | 位置 | 冲突处理 |
 | --- | --- | --- | --- |
 | dsh-kaomoji | 日式颜文字 `(´∀｀)` | 贴合情绪的句子之后 | 互不干扰：emoji 一侧明确禁止与颜文字同句/同行 |
-| Tdsh-emoji | 标准 emoji 😊 | 贴合情绪的句子之后 | `Never place an emoji in the same sentence or line as a kaomoji` |
+| Tdsh-emoji | 标准 emoji 😊 | 贴合内容（可在句中） | `Never place an emoji in the same sentence or line as a kaomoji` |
 
 两张设置卡片都在「设置 → 通用设置」（order 30 / 31），可以挨着调。
 
