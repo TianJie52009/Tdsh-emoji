@@ -16,7 +16,7 @@
 - **与 dsh-kaomoji 共存**：两个插件都是“贴合句子”的插法，所以本插件额外规定 **emoji 与颜文字不得出现在同一句/同一行**，模型会把它们分到不同句子；两张设置卡片同在「设置 → 通用设置」且相邻排列。
 - **可视化配置卡片**：模式（关闭 / 智能 / 高频）、放置位置、每条上限、附加提示词，保存即生效，无需重启。
 - **远程可改**：设置走同源路由，Tailscale、局域网、SSH 端口转发打开页面都能保存。
-- **零第三方运行时依赖**：只用 dsh 自带的 `systemPrompt` 与 Node 标准库。
+- **零第三方运行时依赖**：只用 dsh 自带的 `systemPrompt` / `webServer` 与 Node 标准库。
 
 ## 工作原理
 
@@ -68,6 +68,30 @@ dsh plugin --profile web add github:TianJie52009/Tdsh-emoji
 
 两张设置卡片都在「设置 → 通用设置」（order 30 / 31），可以挨着调。
 
+## 兼容性
+
+- 同时适配 dsh `0.1.x` 与 `0.2.x`：所有 `@deepseek-ai/dsh-*` peer 声明为
+  `^0.2.0-rc.2 || ^0.1.0-rc.7`（可选 peer，由 Web Profile 提供共享运行时）。
+- dsh 0.2 起会在启动时按运行时版本校验插件的 dsh peer 范围，不满足的 bundle 会被
+  整体跳过（日志 `dsh: skipping profile bundle ...`）；0.2 的用户请使用本版本，
+  已在 dsh `0.2.0-rc.2` 的真实 web profile 上验证挂载、设置路由与客户端启动图。
+- 实际用到的运行时服务：`systemPrompt`（提示词段）、`webServer`（设置路由）；
+  客户端用到 `slots`、`locale`、`connection/reset`。
+
+## 发布到 npm（维护者）
+
+仓库根目录有一键发布脚本 `publish.cmd`（双击，或在终端里执行）：
+
+```powershell
+.\publish.cmd            # 用 package.json 里的当前版本号直接发布
+.\publish.cmd patch      # 先 npm version patch（minor / major 同理），再发布
+```
+
+脚本依次做四件事：`npm test` → 检查 npm 登录（未登录会提示先执行
+`npm login --registry https://registry.npmjs.org`）→ 可选地 bump 版本号 →
+`npm publish --registry https://registry.npmjs.org`（`prepack` 会再跑一遍测试）。
+发布完成后记得把版本号改动 commit + push 回 GitHub。
+
 ## 开发
 
 ```powershell
@@ -84,6 +108,7 @@ Tdsh-emoji/
 ├── data/catalog.json  # 情绪 -> emoji 白名单
 ├── test/
 ├── cordis.patch.yml
+├── publish.cmd        # 一键发布到 npm
 ├── package.json
 ├── README.md / README.en.md
 └── CHANGELOG.md

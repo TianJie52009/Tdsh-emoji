@@ -21,7 +21,7 @@ skin-tone modifiers, no exotic sequences.
 - **Coexists with dsh-kaomoji** — both place decorations after sentences, so this plugin also forbids emoji and kaomoji in the **same sentence or line**; the model picks different sentences. Both settings cards live next to each other under Settings → General.
 - **Visual settings card** — mode, placement, limit and extra guidance; saved live, no restart.
 - **Remote-friendly** — the settings route is same-origin, so Tailscale/LAN/SSH-tunnel pages can save.
-- **No third-party runtime dependencies** — dsh's `systemPrompt` service and Node built-ins only.
+- **No third-party runtime dependencies** — dsh's `systemPrompt` / `webServer` services and Node built-ins only.
 
 ## How it works
 
@@ -73,11 +73,25 @@ Defaults: `mode: auto`, `placement: inline`, `maxPerTurn: 3`. Deployment default
 
 Both cards live under Settings → General (order 30 / 31).
 
+## Compatibility
+
+- Works on both dsh `0.1.x` and `0.2.x` runtime lines: every
+  `@deepseek-ai/dsh-*` peer is declared as `^0.2.0-rc.2 || ^0.1.0-rc.7`
+  (optional peers, provided by the Web Profile shared runtime).
+- dsh 0.2 validates plugin dsh peers against the runtime version at boot and
+  skips bundles whose ranges do not match (`dsh: skipping profile bundle ...`);
+  use this release on 0.2 — verified against a real `0.2.0-rc.2` Web profile
+  (mount, settings route, client boot graph).
+- Runtime services actually used: `systemPrompt`, `webServer` (settings route);
+  the client half uses `slots`, `locale`, and `connection/reset`.
+
 ## Development
 
 ```powershell
-npm test   # node:test (guidance rules + settings route + client loading)
-npm pack   # verify the publish payload
+npm test          # node:test (guidance rules + settings route + client loading)
+npm pack          # verify the publish payload
+.\publish.cmd     # one-click publish to npm (current version)
+.\publish.cmd minor   # bump the version, then publish
 ```
 
 ## License
