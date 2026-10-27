@@ -1,99 +1,33 @@
 # Tdsh-emoji
 
-> Add standard Unicode emoji to [DeepSeek Harness](https://github.com/deepseek-ai) (dsh) replies, designed to coexist with dsh-kaomoji.
-
-[![npm](https://img.shields.io/npm/v/tdsh-emoji.svg)](https://www.npmjs.com/package/tdsh-emoji)
-[![license](https://img.shields.io/github/license/TianJie52009/Tdsh-emoji.svg)](./LICENSE)
-
-> 🤖 **Pure Codex generation** — the code and docs in this repository were
-> generated entirely by OpenAI Codex and have not been human-reviewed.
-
-`Tdsh-emoji` injects a “mood → emoji” whitelist into the system prompt, so the
-model places a standard emoji **right where the content it matches appears** —
-possibly inside a sentence — instead of always appending it after the sentence.
-The library only uses emoji that ship with iOS, Windows and Android; no
-skin-tone modifiers, no exotic sequences.
-
-## Features
-
-- **Content-matching placement** — at the point that best matches the content (inside a sentence is fine, default), or at the end of the reply (`end`).
-- **Up to 10 per reply** — `maxPerTurn` 1–10, default 3; `frequent` spreads them across sentences.
-- **Coexists with dsh-kaomoji** — both place decorations after sentences, so this plugin also forbids emoji and kaomoji in the **same sentence or line**; the model picks different sentences. Both settings cards live next to each other under Settings → General.
-- **Visual settings card** — mode, placement, limit and extra guidance; saved live, no restart.
-- **Remote-friendly** — the settings route is same-origin, so Tailscale/LAN/SSH-tunnel pages can save.
-- **No third-party runtime dependencies** — dsh's `systemPrompt` / `webServer` services and Node built-ins only.
-
-## How it works
-
-1. Registers the prompt section `tdsh-emoji:guidance` (order `177`; dsh-kaomoji uses `176`).
-2. Each assembly contributes mode/placement rules, the per-reply cap, the emoji whitelist, and the “never share a sentence with a kaomoji” rule.
-3. The settings card uses `POST /tdsh-emoji-settings` to read/write `~/.dsh/tdsh-emoji.json`; the Host updates the prompt section immediately.
+Adds standard Unicode emoji to DeepSeek Harness replies through a curated system-prompt contribution. See [Chinese documentation](./README.md), [compatibility evidence](./COMPATIBILITY.md), and [maintainer handoff](./HANDOFF.md).
 
 ## Install
 
-```powershell
-cd "$env:USERPROFILE\.dsh\profiles\web"
-
-# npm (recommended)
-dsh plugin --profile web add tdsh-emoji
-
-# or straight from GitHub
-dsh plugin --profile web add github:TianJie52009/Tdsh-emoji
+```sh
+dsh plugin --profile web add tdsh-emoji@0.3.0
 ```
 
-Restart the Web Host; the “Emoji (tdsh-emoji)” card appears under Settings → General, right next to the dsh-kaomoji card.
+Restart the Host and reload the client after updating. Edit the card under Settings → General in Web or Desktop. Modes: off/auto/frequent; placement: inline/end; limit: 1–10 (default 3); custom guidance: at most 4000 characters. Changes apply to the next reply. Both plugins can coexist.
 
-## Configuration
+## Native settings and migration
 
-Defaults: `mode: auto`, `placement: inline`, `maxPerTurn: 3`. Deployment defaults can be overridden in the profile’s `cordis.patch.yml`:
+Supports the nine published Harness releases from 0.2.0-rc.2 through 0.2.1-rc.3, including alpha.1–alpha.5 and rc.1–rc.3. Later versions require separate validation.
 
-```yaml
-- id: tdsh-emoji
-  config:
-    mode: frequent     # off | auto | frequent
-    placement: inline  # inline | end
-    maxPerTurn: 5      # 1-10
-    customPrompt: "Keep it professional; prefer encourage/thanks emoji"
-```
+Uses Harness remote.settings and volatile Config fields, with no private HTTP routes or webServer dependency. The active profile stores settings; no browser-local persistence is used.
 
-| Key | Type | Default | Description |
-| --- | --- | --- | --- |
-| `mode` | `'off' \| 'auto' \| 'frequent'` | `'auto'` | `off` disables; `auto` decorates conversational replies; `frequent` decorates every conversational reply (code-only/formal excluded) |
-| `placement` | `'inline' \| 'end'` | `'inline'` | At the point that best matches the content (inside a sentence is fine), or at the reply end |
-| `maxPerTurn` | `number` (1–10) | `3` | Emoji cap per reply; `frequent` spreads them across sentences |
-| `customPrompt` | `string` | `''` | Extra style/scene guidance |
-| `settingsFile` | `string` | `~/.dsh/tdsh-emoji.json` | (advanced) user-settings path |
-
-## Coexistence with dsh-kaomoji
-
-| Plugin | Inserts | Position | Conflict handling |
-| --- | --- | --- | --- |
-| dsh-kaomoji | Japanese kaomoji `(´∀｀)` | after the matching sentence | emoji side forbids sharing a sentence/line |
-| Tdsh-emoji | Standard emoji 😊 | at the point matching the content | `Never place an emoji in the same sentence or line as a kaomoji` |
-
-Both cards live under Settings → General (order 30 / 31).
-
-## Compatibility
-
-- Works on both dsh `0.1.x` and `0.2.x` runtime lines: every
-  `@deepseek-ai/dsh-*` peer is declared as `^0.2.0-rc.2 || ^0.1.0-rc.7`
-  (optional peers, provided by the Web Profile shared runtime).
-- dsh 0.2 validates plugin dsh peers against the runtime version at boot and
-  skips bundles whose ranges do not match (`dsh: skipping profile bundle ...`);
-  use this release on 0.2 — verified against a real `0.2.0-rc.2` Web profile
-  (mount, settings route, client boot graph).
-- Runtime services actually used: `systemPrompt`, `webServer` (settings route);
-  the client half uses `slots`, `locale`, and `connection/reset`.
+On first load, import schemaVersion 1 tdsh-emoji.json from the Host data directory, a legacy nested DSH_HOME/.dsh path, or the configured settingsFile. Existing native user fields win. Original JSON is preserved; the same native write commits the migrationVersion marker. Failed imports log a warning and retry after restart. Reset retains the marker, so old data does not return. Migration is per profile; moving to another machine/data directory requires transferring the source data or profile.
 
 ## Development
 
-```powershell
-npm test          # node:test (guidance rules + settings route + client loading)
-npm pack          # verify the publish payload
-.\publish.cmd     # one-click publish to npm (current version)
-.\publish.cmd minor   # bump the version, then publish
-```
+Run npm ci --legacy-peer-deps, npm test, npm run test:compat, then npm pack --dry-run. The compatibility suite installs official packages in .compat (or DSH_COMPAT_HOME) and starts isolated configuration trees; it never changes live profiles. publish.cmd runs tests before npm publishing.
+
+## Market synchronization
+
+The repository is already listed. The upstream catalog periodically probes npm versions. After publishing and pushing, run sync-market.cmd to compare GitHub, npm latest and the catalog. Exit code 2 means the catalog is pending. A new release can also be held by the market's fresh-release policy.
+
+After the release and repository are at least 24 hours old, sync-market.cmd --request-refresh can open a deduplicated upstream issue if the catalog is still stale. It requires GH_TOKEN or GITHUB_TOKEN. It does not bypass market policy or submit duplicate plugin entries.
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](./LICENSE).

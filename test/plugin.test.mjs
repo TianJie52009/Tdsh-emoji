@@ -11,7 +11,6 @@ import {
   PLACEMENTS,
   SECTION_NAME,
   SECTION_ORDER,
-  SETTINGS_ROUTE,
   apply,
   buildGuidance,
   name,
@@ -27,7 +26,6 @@ test("package identity and limits are stable", () => {
   assert.equal(MAX_EMOJI_PER_TURN, 10);
   assert.equal(SECTION_NAME, "tdsh-emoji:guidance");
   assert.equal(SECTION_ORDER, 177);
-  assert.equal(SETTINGS_ROUTE, "/tdsh-emoji-settings");
 });
 
 test("catalog json stays in sync with code catalog", () => {
@@ -99,182 +97,24 @@ test("customPrompt is appended without changing core rules", () => {
 });
 
 /** Minimal host ctx: captures the settings route and the prompt section. */
-function makeHostCtx() {
-  let route;
-  let section;
-  const ctx = {
-    emit() {},
-    effect(register) {
-      return register();
-    },
-    get() {
-      return undefined;
-    },
-    systemPrompt: {
-      section(value) {
-        section = value;
-        return () => {};
-      },
-    },
-    inject(services, register) {
-      if (Array.isArray(services) && services.includes("webServer")) {
-        register({
-          effect(callback) {
-            return callback();
-          },
-          webServer: {
-            register(value) {
-              route = value;
-              return () => {};
-            },
-          },
-        });
-      }
-    },
-  };
-  return { ctx, route: () => route, section: () => section };
-}
-
-/** Drive one POST through the captured settings route. */
-async function postSettings(route, body) {
-  const request = {
-    method: "POST",
-    async *[Symbol.asyncIterator]() {
-      yield Buffer.from(JSON.stringify(body));
-    },
-  };
-  let status;
-  let payload;
-  const response = {
-    writeHead(code) {
-      status = code;
-    },
-    end(text) {
-      payload = JSON.parse(text);
-    },
-  };
-  await route.handler(request, response);
-  return { status, payload };
-}
-
-test("apply registers the prompt section and the settings route", () => {
-  const dir = mkdtempSync(join(tmpdir(), "tdsh-emoji-test-"));
-  const host = makeHostCtx();
-  try {
-    apply(host.ctx, { mode: "frequent", placement: "end", settingsFile: join(dir, "state.json") });
-    const section = host.section();
-    assert.equal(section.name, SECTION_NAME);
-    assert.equal(section.order, SECTION_ORDER);
-    assert.match(section.text(), /In every conversational reply/);
-    assert.equal(host.route().kind, "exact");
-    assert.equal(host.route().path, SETTINGS_ROUTE);
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
+test("native config schema rejects invalid settings", async () => {
+  const { Config } = await import("../lib/index.js");
+  const value = Config({});
+  assert.equal(value.mode.get(), DEFAULT_CONFIG.mode);
+  for (const input of [{ mode: "bad" }, { placement: "bad" }, { maxPerTurn: 0 }, { maxPerTurn: 1.5 }, { maxPerTurn: 11 }, { customPrompt: "x".repeat(4001) }]) {
+    assert.throws(() => Config(input));
   }
 });
 
-test("mode off keeps an empty section but the settings route stays alive", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "tdsh-emoji-test-"));
-  const host = makeHostCtx();
-  try {
-    apply(host.ctx, { mode: "off", settingsFile: join(dir, "state.json") });
-    const section = host.section();
-    assert.equal(section.text(), "");
-
-    const initial = await postSettings(host.route(), { endpoint: "get", payload: {} });
-    assert.equal(initial.payload.ok, true);
-    const saved = await postSettings(host.route(), {
-      endpoint: "save",
-      payload: {
-        settings: { mode: "frequent", placement: "inline", maxPerTurn: 5, customPrompt: "" },
-        expectedRevision: initial.payload.value.revision,
-      },
-    });
-    assert.equal(saved.payload.ok, true);
-    assert.equal(saved.payload.value.settings.maxPerTurn, 5);
-    assert.match(section.text(), /In every conversational reply/);
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
+test("manifest covers only the nine agreed Harness releases and uses native remotes", () => {
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  const releases = ["0.2.0-rc.2", ...[1,2,3,4,5].map(n => "0.2.1-alpha." + n), ...[1,2,3].map(n => "0.2.1-rc." + n)];
+  assert.deepEqual(pkg.engines.dsh.split(" || "), releases);
+  for (const [peer, range] of Object.entries(pkg.peerDependencies)) {
+    if (peer.startsWith("@deepseek-ai/dsh-")) assert.equal(range, pkg.engines.dsh);
   }
-});
-
-test("settings route rejects stale revisions and accepts reset", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "tdsh-emoji-test-"));
-  const host = makeHostCtx();
-  try {
-    apply(host.ctx, { mode: "auto", settingsFile: join(dir, "state.json") });
-    const before = (await postSettings(host.route(), { endpoint: "get", payload: {} })).payload;
-    assert.equal(before.value.settings.maxPerTurn, 3);
-
-    const stale = (await postSettings(host.route(), {
-      endpoint: "save",
-      payload: {
-        settings: { mode: "frequent", placement: "inline", maxPerTurn: 10, customPrompt: "" },
-        expectedRevision: before.value.revision + 9,
-      },
-    })).payload;
-    assert.equal(stale.ok, false);
-    assert.equal(stale.error.code, "settings-conflict");
-
-    const saved = (await postSettings(host.route(), {
-      endpoint: "save",
-      payload: {
-        settings: { mode: "frequent", placement: "inline", maxPerTurn: 10, customPrompt: "少卖萌" },
-        expectedRevision: before.value.revision,
-      },
-    })).payload;
-    assert.equal(saved.ok, true);
-    assert.equal(saved.value.settings.maxPerTurn, 10);
-    assert.equal(saved.value.settings.customPrompt, "少卖萌");
-
-    const over = (await postSettings(host.route(), {
-      endpoint: "save",
-      payload: {
-        settings: { mode: "frequent", placement: "inline", maxPerTurn: 11, customPrompt: "" },
-        expectedRevision: saved.value.revision,
-      },
-    })).payload;
-    assert.equal(over.ok, false);
-    assert.equal(over.error.code, "bad-request");
-
-    const reset = (await postSettings(host.route(), {
-      endpoint: "reset",
-      payload: { expectedRevision: saved.value.revision },
-    })).payload;
-    assert.equal(reset.ok, true);
-    assert.equal(reset.value.settings.mode, "auto");
-    assert.equal(reset.value.settings.maxPerTurn, 3);
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-test("manifest declares 0.2-era dsh peers and no removed packages", () => {
-  const pkg = JSON.parse(
-    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-  );
-  const peers = pkg.peerDependencies ?? {};
-  for (const [peerName, range] of Object.entries(peers)) {
-    assert.ok(
-      !peerName.includes("dsh-client-runtime"),
-      `${peerName} was removed from dsh 0.2 and must not be declared`,
-    );
-    if (peerName.startsWith("@deepseek-ai/dsh-")) {
-      // dsh 0.2 启动时会用运行时版本校验这些范围（includePrerelease）；
-      // 0.1.x 与 0.2.x 两条运行时线都必须能加载。
-      assert.ok(range.includes("^0.2.0-rc.2"), `${peerName} must accept dsh 0.2`);
-      assert.ok(range.includes("^0.1.0-rc.7"), `${peerName} must keep dsh 0.1 support`);
-    }
-  }
-  const inject = pkg.dsh?.client?.inject ?? [];
-  assert.ok(inject.length > 0, "client inject list must not be empty");
-  for (const injected of inject) {
-    assert.ok(
-      !injected.includes("dsh-client-runtime"),
-      `${injected} was removed from dsh 0.2 and must not be injected`,
-    );
-    assert.ok(peers[injected], `dsh.client.inject entry ${injected} must be a declared peer`);
-  }
-  assert.equal(pkg.dsh?.manifestVersion, 1);
-  assert.equal(pkg.engines?.dsh, "^0.2.0-rc.2 || ^0.1.0-rc.7");
+  assert.equal(pkg.peerDependencies["@deepseek-ai/dsh-host-webserver"], undefined);
+  assert.ok(pkg.dsh.client.inject.includes("@deepseek-ai/dsh-api-remotes"));
+  for (const peer of pkg.dsh.client.inject) assert.ok(pkg.peerDependencies[peer]);
+  assert.equal(pkg.dsh.manifestVersion, 1);
 });
